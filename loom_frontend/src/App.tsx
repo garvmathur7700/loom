@@ -27,6 +27,8 @@ export default function App() {
           roomId={currentRoom}
           defaultLanguage={language}
           defaultValue="// Start coding together!"
+          language={language}
+          onLanguageChange={setLanguage}
         />
       </main>
       
