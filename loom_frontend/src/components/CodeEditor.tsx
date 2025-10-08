@@ -4,7 +4,6 @@ import type { editor } from 'monaco-editor';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
-import { Awareness } from 'y-protocols/awareness';
 
 interface EditorProps {
   roomId: string
