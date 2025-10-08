@@ -388,8 +388,11 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
     
     yDocRef.current = ydoc;
     
+    // Use environment variable for WebSocket URL
+    const wsUrl = import.meta.env.VITE_WS_URL || 'wss://loom-backend-production-87df.up.railway.app';
+    
     providerRef.current = new WebsocketProvider(
-      'wss://loom-backend-production-87df.up.railway.app', // New railway production url
+      wsUrl,
       roomId,
       ydoc
     );
