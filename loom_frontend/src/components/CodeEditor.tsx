@@ -35,7 +35,6 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
         }));
         
         setLastSaved(new Date());
-        console.log('Auto-saved at', new Date().toLocaleTimeString());
       }
     }, 30000); // Save every 30 seconds
 
@@ -55,7 +54,7 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
           // Note: The code will be synced via Yjs, so we don't set it directly
         }
       } catch (error) {
-        console.error('Error loading saved data:', error);
+        // Silent error handling
       }
     }
   }, [roomId]);
@@ -426,8 +425,6 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
       new Set([editor]),
       awareness
     );
-    
-    console.log('Editor mounted for room:', roomId, 'as', userName);
   }
 
   // Update shared language when local language changes

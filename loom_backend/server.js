@@ -21,8 +21,6 @@ wss.on('connection', (ws, req) => {
   // Extract room name from URL
   const roomName = new URL(req.url, 'http://localhost').pathname.slice(1) || 'default';
   
-  console.log(`Client connected to room: ${roomName}`);
-  
   // Get or create Yjs document for this room
   if (!docs.has(roomName)) {
     const doc = new Y.Doc();
@@ -95,12 +93,11 @@ wss.on('connection', (ws, req) => {
         });
       }
     } catch (err) {
-      console.error('Error handling message:', err);
+      // Silent error handling
     }
   });
   
   ws.on('close', () => {
-    console.log(`Client disconnected from room: ${roomName}`);
     // Remove awareness state
     const awarenessEncoder = encoding.createEncoder();
     encoding.writeVarUint(awarenessEncoder, messageAwareness);
@@ -117,5 +114,3 @@ wss.on('connection', (ws, req) => {
     });
   });
 });
-
-console.log(`WebSocket server running on port ${PORT}`);
