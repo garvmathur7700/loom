@@ -1,14 +1,14 @@
 import './App.css'
-import Editor from '@monaco-editor/react';
+import Editor from './components/CodeEditor'
 
 export default function App() {
   return (
-    <Editor 
-      className="Monaco-Editor"
-      height="90vh" 
-      defaultLanguage="java" 
-      defaultValue="// some comment" 
-      theme='vs-dark'
-    />
+    <div className="Monaco-Editor">
+      <Editor 
+        roomId="default-room"
+        defaultLanguage="javascript"
+        defaultValue="// Start coding together!"
+      />
+    </div>
   );
 }
