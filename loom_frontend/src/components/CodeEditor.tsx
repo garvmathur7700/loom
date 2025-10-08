@@ -389,7 +389,7 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
     yDocRef.current = ydoc;
     
     providerRef.current = new WebsocketProvider(
-      'ws://localhost:1234',
+      'ws://loom-backend-production-87df.up.railway.app', // New railway production url
       roomId,
       ydoc
     );
