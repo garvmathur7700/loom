@@ -4,9 +4,10 @@
   "description": "Single Server backend for loom",
   "license": "MIT",
   "author": "Garv Mathur",
-  "type": "commonjs",
+  "type": "module",
   "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
