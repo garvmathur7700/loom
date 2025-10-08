@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import * as monaco from 'monaco-editor';
@@ -11,7 +11,7 @@ interface EditorProps {
   defaultLanguage?: string
   defaultValue?: string
   language?: string
-  onLanguageChange?: (language: string) => void  // Add callback for language changes
+  onLanguageChange?: (language: string) => void
 }
 
 function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', language, onLanguageChange }: EditorProps) {
@@ -19,6 +19,46 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
   const providerRef = useRef<WebsocketProvider | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
   const yDocRef = useRef<Y.Doc | null>(null);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    const saveInterval = setInterval(() => {
+      if (editorRef.current) {
+        const code = editorRef.current.getValue();
+        const storageKey = `loom-room-${roomId}`;
+        
+        localStorage.setItem(storageKey, JSON.stringify({
+          code,
+          language,
+          timestamp: new Date().toISOString()
+        }));
+        
+        setLastSaved(new Date());
+        console.log('Auto-saved at', new Date().toLocaleTimeString());
+      }
+    }, 30000); // Save every 30 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [roomId, language]);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const storageKey = `loom-room-${roomId}`;
+    const saved = localStorage.getItem(storageKey);
+    
+    if (saved && editorRef.current) {
+      try {
+        const { code, language: savedLanguage } = JSON.parse(saved);
+        if (code && onLanguageChange && savedLanguage) {
+          onLanguageChange(savedLanguage);
+          // Note: The code will be synced via Yjs, so we don't set it directly
+        }
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+  }, [roomId]);
 
   function handleEditorDidMount(editor: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) {
     editorRef.current = editor;
@@ -344,7 +384,7 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
     // Yjs setup
     const ydoc = new Y.Doc();
     const ytext = ydoc.getText('monaco');
-    const yLanguage = ydoc.getMap('language'); // Shared language state
+    const yLanguage = ydoc.getMap('language');
     
     yDocRef.current = ydoc;
     
@@ -363,17 +403,13 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
       color: userColor
     });
 
-    // Set initial language if this is the first user or sync with existing
     const currentLanguage = yLanguage.get('current') as string | undefined;
     if (!currentLanguage && language) {
-      // First user sets the language
       yLanguage.set('current', language);
     } else if (currentLanguage && currentLanguage !== language && onLanguageChange) {
-      // Sync with existing language
       onLanguageChange(currentLanguage);
     }
 
-    // Listen for language changes from other users
     yLanguage.observe(() => {
       const newLanguage = yLanguage.get('current') as string | undefined;
       if (newLanguage && newLanguage !== language && onLanguageChange) {
@@ -397,7 +433,6 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
       const yLanguage = yDocRef.current.getMap('language');
       const currentSharedLanguage = yLanguage.get('current') as string | undefined;
       
-      // Only update if language actually changed to avoid infinite loops
       if (currentSharedLanguage !== language) {
         yLanguage.set('current', language);
       }
@@ -422,30 +457,46 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '', lan
   }, []);
 
   return (
-    <MonacoEditor
-      height="90vh"
-      defaultLanguage={defaultLanguage}
-      defaultValue={defaultValue}
-      theme="vs-dark"
-      onMount={handleEditorDidMount}
-      options={{
-        fontSize: 14,
-        minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on',
-        automaticLayout: true,
-        suggestOnTriggerCharacters: true,
-        quickSuggestions: true,
-        tabCompletion: 'on',
-        suggest: {
-          showWords: true,
-          showSnippets: true,
-          snippetsPreventQuickSuggestions: false,
-        },
-        acceptSuggestionOnCommitCharacter: true,
-        acceptSuggestionOnEnter: 'on',
-      }}
-    />
+    <div style={{ position: 'relative' }}>
+      <MonacoEditor
+        height="90vh"
+        defaultLanguage={defaultLanguage}
+        defaultValue={defaultValue}
+        theme="vs-dark"
+        onMount={handleEditorDidMount}
+        options={{
+          fontSize: 14,
+          minimap: { enabled: false },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+          automaticLayout: true,
+          suggestOnTriggerCharacters: true,
+          quickSuggestions: true,
+          tabCompletion: 'on',
+          suggest: {
+            showWords: true,
+            showSnippets: true,
+            snippetsPreventQuickSuggestions: false,
+          },
+          acceptSuggestionOnCommitCharacter: true,
+          acceptSuggestionOnEnter: 'on',
+        }}
+      />
+      {lastSaved && (
+        <div style={{
+          position: 'absolute',
+          bottom: '10px',
+          right: '10px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          color: '#4caf50',
+          padding: '5px 10px',
+          borderRadius: '4px',
+          fontSize: '12px'
+        }}>
+          ✓ Saved at {lastSaved.toLocaleTimeString()}
+        </div>
+      )}
+    </div>
   );
 }
 
