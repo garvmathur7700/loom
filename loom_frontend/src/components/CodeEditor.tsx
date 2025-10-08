@@ -4,6 +4,7 @@ import type { editor } from 'monaco-editor';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
+import { Awareness } from 'y-protocols/awareness';
 
 interface EditorProps {
   roomId: string
@@ -19,26 +20,33 @@ function Editor({ roomId, defaultLanguage = 'javascript', defaultValue = '' }: E
   function handleEditorDidMount(editor: editor.IStandaloneCodeEditor) {
     editorRef.current = editor;
     
-    // Create Yjs document
     const ydoc = new Y.Doc();
     const ytext = ydoc.getText('monaco');
     
-    // Connect to WebSocket server
     providerRef.current = new WebsocketProvider(
       'ws://localhost:1234',
       roomId,
       ydoc
     );
+
+    // Add user info to awareness
+    const awareness = providerRef.current.awareness;
+    const userName = `User-${Math.floor(Math.random() * 1000)}`;
+    const userColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
     
-    // Bind Monaco editor to Yjs
+    awareness.setLocalStateField('user', {
+      name: userName,
+      color: userColor
+    });
+    
     bindingRef.current = new MonacoBinding(
       ytext,
       editor.getModel()!,
       new Set([editor]),
-      providerRef.current.awareness
+      awareness
     );
     
-    console.log('Editor mounted for room:', roomId);
+    console.log('Editor mounted for room:', roomId, 'as', userName);
   }
 
   useEffect(() => {
